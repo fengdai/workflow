@@ -23,8 +23,10 @@ import com.squareup.sample.authworkflow.AuthState.SecondFactorPrompt
 import com.squareup.workflow.EnterState
 import com.squareup.workflow.FinishWith
 import com.squareup.workflow.Reaction
+import com.squareup.workflow.RunningWorkflow
 import com.squareup.workflow.Workflow
 import com.squareup.workflow.WorkflowPool
+import com.squareup.workflow.makeWorkflowId
 import com.squareup.workflow.rx2.EventChannel
 import com.squareup.workflow.rx2.Reactor
 import com.squareup.workflow.rx2.doLaunch
@@ -109,4 +111,14 @@ class AuthReactor(
 
   private val SubmitLogin.userInputErrorMessage: String
     get() = if (email.indexOf('@') < 0) "Invalid address" else ""
+
+  companion object {
+    /**
+     * Returns a [RunningWorkflow] that can kick one of these off in a [WorkflowPool].
+     */
+    fun run(
+      state: AuthState = AuthState.start()
+    ): RunningWorkflow<AuthState, AuthEvent, String> =
+      RunningWorkflow(AuthReactor::class.makeWorkflowId(), state)
+  }
 }

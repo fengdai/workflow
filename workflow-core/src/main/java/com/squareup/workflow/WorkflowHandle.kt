@@ -19,32 +19,34 @@ import com.squareup.workflow.WorkflowPool.Id
 import com.squareup.workflow.WorkflowPool.Type
 
 /**
- * Implemented by workflow states that represent nested workflows to be run by a [WorkflowPool].
+ * Reference to a workflow to be run by a [WorkflowPool], reflecting its
+ * last known [state][RunningWorkflow.state] or [result][FinishedWorkflow.result].
  */
-interface Delegating<S : Any, E : Any, O : Any> {
+sealed class WorkflowHandle<S : Any, E : Any, O : Any> {
   /**
    * Uniquely identifies the delegate across the [WorkflowPool].
    * See [WorkflowPool.Type.makeWorkflowId] for details.
    */
-  val id: Id<S, E, O>
-
-  /**
-   * The current state of the delegate. Used as its initial state if it was not already
-   * running.
-   */
-  val delegateState: S
+  abstract val id: Id<S, E, O>
 }
 
+data class RunningWorkflow<S : Any, E : Any, O : Any>(
+  override val id: Id<S, E, O>,
+  val state: S
+) : WorkflowHandle<S, E, O>()
+
+data class FinishedWorkflow<S : Any, E : Any, O : Any>(
+  override val id: Id<S, E, O>,
+  val result: O
+) : WorkflowHandle<S, E, O>()
+
 /**
- * Make an ID for the [workflowType] of this [Delegating].
- *
- * This is a convenience function intended to be used inside delegating states, to initialize
- * their [Delegating.id] property.
+ * Make an ID for the [workflowType] of this [WorkflowHandle].
  *
  * @see Type.makeWorkflowId
  */
 @Suppress("unused")
 inline fun <reified S : Any, reified E : Any, reified O : Any>
-    Delegating<S, E, O>.makeWorkflowId(name: String = ""): Id<S, E, O> =
+    WorkflowHandle<S, E, O>.makeWorkflowId(name: String = ""): Id<S, E, O> =
 // We can't use id.type since ID hasn't been initialized yet.
   Type(S::class, E::class, O::class).makeWorkflowId(name)

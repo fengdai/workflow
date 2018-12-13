@@ -15,12 +15,12 @@
  */
 package com.squareup.workflow.rx2
 
-import com.squareup.workflow.Delegating
-import com.squareup.workflow.Reaction
+import com.squareup.workflow.RunningWorkflow
 import com.squareup.workflow.Worker
+import com.squareup.workflow.WorkflowHandle
 import com.squareup.workflow.WorkflowPool
-import com.squareup.workflow.nextDelegateReaction
 import com.squareup.workflow.workerResult
+import com.squareup.workflow.workflowUpdate
 import io.reactivex.Single
 import io.reactivex.Single.just
 import kotlinx.coroutines.experimental.Dispatchers.Unconfined
@@ -84,22 +84,22 @@ class EventSelectBuilder<E : Any, R : Any> internal constructor(
    * Starts the required nested workflow if it wasn't already running. Returns
    * a [Single] that will fire the next time the nested workflow updates its state,
    * or completes.
-   * States that are equal to the [Delegating.delegateState] are skipped.
+   * States that are equal to the [RunningWorkflow.state] are skipped.
    *
    * If the nested workflow was not already running, it is started in the
-   * [given state][Delegating.delegateState] (the initial state is not reported, since states equal
+   * [given state][RunningWorkflow.state] (the initial state is not reported, since states equal
    * to the delegate state are skipped). Otherwise, the [Single] skips state updates that match the
    * given state.
    *
-   * If the nested workflow is [abandoned][WorkflowPool.abandonDelegate], this case will never
+   * If the nested workflow is [abandoned][WorkflowPool.abandonWorkflow], this case will never
    * be selected.
    */
-  fun <S : Any, O : Any> WorkflowPool.onNextDelegateReaction(
-    delegating: Delegating<S, *, O>,
-    handler: (Reaction<S, O>) -> R
+  fun <S : Any, E : Any, O : Any> WorkflowPool.onWorkflowUpdate(
+    handle: RunningWorkflow<S, E, O>,
+    handler: (WorkflowHandle<S, E, O>) -> R
   ) {
     with(builder) {
-      nextDelegateReaction(delegating)
+      workflowUpdate(handle)
           .onAwait { just(handler(it)) }
     }
   }

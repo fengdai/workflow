@@ -23,10 +23,12 @@ import com.squareup.sample.tictactoe.TakeTurnsEvent.TakeSquare
 import com.squareup.workflow.EnterState
 import com.squareup.workflow.FinishWith
 import com.squareup.workflow.Reaction
+import com.squareup.workflow.RunningWorkflow
 import com.squareup.workflow.Workflow
 import com.squareup.workflow.WorkflowPool
-import com.squareup.workflow.rx2.Reactor
+import com.squareup.workflow.makeWorkflowId
 import com.squareup.workflow.rx2.EventChannel
+import com.squareup.workflow.rx2.Reactor
 import com.squareup.workflow.rx2.doLaunch
 import io.reactivex.Single
 
@@ -89,5 +91,13 @@ class TakeTurnsReactor : Reactor<Turn, TakeTurnsEvent, CompletedGame> {
     if (board.hasVictory()) return Victory
     if (board.isFull()) return Draw
     return null
+  }
+
+  companion object {
+    /**
+     * Returns a [RunningWorkflow] that can kick one of these off in a [WorkflowPool].
+     */
+    fun run(turn: Turn): RunningWorkflow<Turn, TakeTurnsEvent, CompletedGame> =
+      RunningWorkflow(TakeTurnsReactor::class.makeWorkflowId(), turn)
   }
 }
